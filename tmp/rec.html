@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <button id="start">start</button>
+    <button id="play">play</button>
+    <script>
+      let localStream;
+      let recorder;
+      let recoding = false;
+      let chunk = [];
+
+      const start = () => {
+        recorder = new MediaRecorder(localStream);
+        chunk = [];
+        recorder.ondataavailable = (evt) => {
+          console.log(evt.data);
+          chunk.push(evt.data);
+        };
+        recorder.start();
+        recoding = true;
+      };
+
+      const stop = () => {
+        recorder.stop();
+        recoding = false;
+      };
+
+      const play = () => {
+        const blob = new Blob(chunk);
+        const formData = new FormData();
+        formData.append('file', blob);
+        formData.append('id', new Blob([new Date().getTime()]));
+        fetch('http://localhost:8080', {
+          method: 'POST',
+          body: formData
+        });
+        const url = URL.createObjectURL(blob);
+      };
+
+      window.addEventListener('load', () => {
+        navigator.mediaDevices
+          .getUserMedia({ audio: true })
+          .then((stream) => (localStream = stream));
+          
+        const startButton = document.querySelector('#start');
+        startButton.addEventListener('click', () => {
+          if (recoding) {
+            stop();
+            startButton.innerText = 'start';
+            return;
+          }
+          start();
+          startButton.innerText = 'stop';
+        });
+
+        const playButton = document.querySelector('#play');
+        playButton.addEventListener('click', play);
+      });
+    </script>
+  </body>
+</html>

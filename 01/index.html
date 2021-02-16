@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <button id="stream">Start Local Stream</button>
+    <button id="record" disabled>Start Record</button>
+    <div id="trackContainer"></div>
+
+    <script>
+      window.addEventListener('load', () => {
+        const streamButton = document.querySelector('#stream'); // Start Local Streamボタン
+        let localStream;
+        streamButton.addEventListener('click', async () => {
+          // Start LocalStreamボタンがクリックされたら
+          try {
+            // マイクの有効化
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: true, // 音声
+              video: false, // 映像
+            });
+          } catch (err) {
+            return;
+          }
+          streamButton.setAttribute('disabled', true);
+          recordButton.removeAttribute('disabled');
+        });
+
+        let recorder;
+        let chunks;
+        let recording = false;
+
+        const startRecording = () => {
+          // レコード開始
+          recorder = new MediaRecorder(localStream); // メディアレコーダー
+          chunks = []; // バイナリ保管用
+          recorder.ondataavailable = (e) => {
+            // メディアが記録されたら
+            console.log('add audio track');
+            chunks.push(e.data); // 配列にバイナリを追加
+            addAudioTrack(); // audioタグの追加
+          };
+          recorder.start(); // レコーダー起動
+          recording = true;
+          console.log('start recording');
+        };
+
+        const stopRecording = () => {
+          recorder.stop(); // レコーダー停止
+          recording = false;
+          console.log('stop recording');
+        };
+
+        const addAudioTrack = () => {
+          const blob = new Blob(chunks); // 一つのバイナリデータに変換
+          const url = URL.createObjectURL(blob); // URL形式でデータを生成
+          const audio = document.createElement('audio'); // audioタグの作成
+          audio.setAttribute('controls', true); // controls属性の追加
+          audio.src = url; // audioタグのソースを指定
+          document.querySelector('#trackContainer').appendChild(audio); // #trackContainerにaudioタグを追加
+        };
+
+        const recordButton = document.querySelector('#record'); // Start(Stop) Recordingボタン
+
+        recordButton.addEventListener('click', () => {
+          // Start(Stop) Recordingボタンがクリックされたら
+          if (recording) {
+            // 起動中なら
+            stopRecording(); // レコーダー停止
+            recordButton.innerText = 'Start Recording';
+          } else {
+            // 止まっていたら
+            startRecording(); // レコーダー起動
+            recordButton.innerText = 'Stop Recording';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

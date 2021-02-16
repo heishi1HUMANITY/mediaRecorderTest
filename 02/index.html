@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <body>
+    <button id="stream">Start Local Stream</button>
+    <button id="record" disabled>Start Record</button>
+
+    <script>
+      window.addEventListener('load', () => {
+        const streamButton = document.querySelector('#stream'); // Start Local Streamボタン
+        let localStream;
+        streamButton.addEventListener('click', async () => {
+          // Start LocalStreamボタンがクリックされたら
+          try {
+            // マイクの有効化
+            localStream = await navigator.mediaDevices.getUserMedia({
+              audio: true, // 音声
+              video: false, // 映像
+            });
+          } catch (err) {
+            return;
+          }
+          streamButton.setAttribute('disabled', true);
+          recordButton.removeAttribute('disabled');
+        });
+
+        let recorder;
+        let chunks;
+        let recording = false;
+
+        const startRecording = () => {
+          // レコード開始
+          recorder = new MediaRecorder(localStream); // メディアレコーダー
+          chunks = []; // バイナリ保管用
+          recorder.ondataavailable = (e) => {
+            // メディアが記録されたら
+            console.log('add audio track');
+            chunks.push(e.data); // 配列にバイナリを追加
+            sendAudioTrack(); // audioタグの追加
+          };
+          recorder.start(); // レコーダー起動
+          recording = true;
+          console.log('start recording');
+        };
+
+        const stopRecording = () => {
+          recorder.stop(); // レコーダー停止
+          recording = false;
+          console.log('stop recording');
+        };
+
+        const sendAudioTrack = () => {
+          const blob = new Blob(chunks); // 一つのバイナリデータに変換
+          const formData = new FormData(); // formdataの作成
+          formData.append('media', blob); // formdataにバイナリデータを追加
+          // 送信
+          fetch('http://localhost:8080', {
+            method: 'POST',
+            body: formData,
+          });
+        };
+
+        const recordButton = document.querySelector('#record'); // Start(Stop) Recordingボタン
+
+        recordButton.addEventListener('click', () => {
+          // Start(Stop) Recordingボタンがクリックされたら
+          if (recording) {
+            // 起動中なら
+            stopRecording(); // レコーダー停止
+            recordButton.innerText = 'Start Recording';
+          } else {
+            // 止まっていたら
+            startRecording(); // レコーダー起動
+            recordButton.innerText = 'Stop Recording';
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

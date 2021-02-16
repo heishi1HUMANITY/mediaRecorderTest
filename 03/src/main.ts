@@ -2,8 +2,22 @@
 
 import * as stream from './stream';
 import { socket, sendBlobData } from './socket';
+import { hash } from './hash';
 
+const roomName: HTMLInputElement = document.querySelector('#room');
+const roomSubmitButton: HTMLButtonElement = document.querySelector('#roomSubmit');
 const startStreamButton = document.querySelector('#stream');
+
+roomSubmitButton.addEventListener('click', (): void => {
+  if (roomName.value !== '') {
+    hash(roomName.value)
+      .then((roomHash: string) => {
+        socket.emit('join', roomHash);
+      })
+    startStreamButton.removeAttribute('disabled');
+    return;
+  }
+})
 
 startStreamButton.addEventListener('click', async (): Promise<void> => {
   try {

@@ -4,7 +4,10 @@
     <meta charset="utf-8" />
   </head>
   <body>
-    <button id="stream">Start Local Stream</button>
+    <input type="text" id="room">
+    <button id="roomSubmit">join</button>
+
+    <button id="stream" disabled>Start Local Stream</button>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="./js/bundle.js"></script>
